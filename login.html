@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - WA-Sender PRO</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body class="bg-slate-100 flex items-center justify-center min-h-screen p-4">
+
+    <div class="bg-white w-full max-w-sm p-8 rounded-3xl shadow-2xl border border-slate-200">
+        <div class="text-center mb-8">
+            <h1 class="text-2xl font-black text-emerald-600 italic tracking-tighter">WA-SENDER PRO</h1>
+            <p class="text-slate-400 text-sm mt-1">Kelola antrean pesan dengan mudah</p>
+        </div>
+
+        <div class="space-y-4">
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest">Email Address</label>
+                <input type="email" id="email" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm" placeholder="nama@email.com">
+            </div>
+
+            <div>
+                <label class="block text-[10px] font-black text-slate-400 mb-1 uppercase tracking-widest">Password</label>
+                <div class="relative">
+                    <input type="password" id="password" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 transition-all text-sm" placeholder="••••••••">
+                    <button onclick="togglePassword()" class="absolute right-3 top-3 text-slate-400 hover:text-emerald-600 transition-colors">
+                        <i id="eyeIcon" class="fa-solid fa-eye"></i>
+                    </button>
+                </div>
+                <div class="flex justify-end mt-1">
+                    <a href="#" onclick="alert('Silakan hubungi admin untuk reset password.')" class="text-[11px] text-emerald-600 font-bold hover:underline">Lupa password?</a>
+                </div>
+            </div>
+            
+            <button onclick="handleLogin()" id="btnLogin" class="w-full bg-emerald-600 text-white font-black py-4 rounded-xl shadow-lg shadow-emerald-100 active:scale-95 transition-all mt-2">MASUK SEKARANG</button>
+            
+            <div class="relative py-2">
+                <div class="absolute inset-0 flex items-center"><span class="w-full border-t border-slate-200"></span></div>
+                <div class="relative flex justify-center text-xs uppercase"><span class="bg-white px-2 text-slate-400 font-bold">Baru di sini?</span></div>
+            </div>
+
+            <button onclick="handleRegister()" class="w-full bg-slate-800 text-white font-bold py-3 rounded-xl active:scale-95 transition-all text-sm">BUAT AKUN GRATIS</button>
+        </div>
+        
+        <div id="msg" class="mt-6 p-3 rounded-xl text-center text-xs font-bold hidden"></div>
+    </div>
+
+    <script>
+        const SB_URL = "https://fcpwrywtavqkzhmbyoky.supabase.co";
+        const SB_KEY = "sb_publishable_Ukw9L4kSggBMNDsxWqWbbw_0Pr93a4h";
+        const supabase = window.supabase.createClient(SB_URL, SB_KEY);
+
+        const msgBox = document.getElementById('msg');
+
+        // Fungsi Show/Hide Password
+        function togglePassword() {
+            const pwd = document.getElementById('password');
+            const icon = document.getElementById('eyeIcon');
+            if (pwd.type === "password") {
+                pwd.type = "text";
+                icon.classList.replace('fa-eye', 'fa-eye-slash');
+            } else {
+                pwd.type = "password";
+                icon.classList.replace('fa-eye-slash', 'fa-eye');
+            }
+        }
+
+        function showMessage(text, type) {
+            msgBox.innerText = text;
+            msgBox.classList.remove('hidden', 'bg-red-50', 'text-red-500', 'bg-emerald-50', 'text-emerald-500', 'bg-blue-50', 'text-blue-500');
+            
+            if (type === 'error') msgBox.classList.add('bg-red-50', 'text-red-500');
+            else if (type === 'success') msgBox.classList.add('bg-emerald-50', 'text-emerald-500');
+            else msgBox.classList.add('bg-blue-50', 'text-blue-500');
+            
+            msgBox.classList.remove('hidden');
+        }
+
+        async function handleRegister() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if(!email || !password) return showMessage("Isi email dan password!", "error");
+
+            showMessage("Sedang memproses pendaftaran...", "info");
+            const { data, error } = await supabase.auth.signUp({ email, password });
+
+            if (error) {
+                if (error.message.includes("already registered")) {
+                    showMessage("Email sudah terdaftar! Silakan langsung login.", "error");
+                } else {
+                    showMessage(error.message, "error");
+                }
+            } else {
+                showMessage("Pendaftaran Berhasil! Silakan klik tombol MASUK.", "success");
+            }
+        }
+
+        async function handleLogin() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if(!email || !password) return showMessage("Email/Password kosong!", "error");
+
+            showMessage("Memverifikasi...", "info");
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+
+            if (error) {
+                // Notifikasi spesifik sesuai permintaan
+                if (error.message.includes("Invalid login credentials")) {
+                    // Supabase biasanya menyamarkan apakah email tidak ada atau password salah demi keamanan
+                    // Tapi kita bisa memberikan pesan yang membantu user
+                    showMessage("Email belum terdaftar atau Password salah!", "error");
+                } else {
+                    showMessage(error.message, "error");
+                }
+            } else {
+                showMessage("Berhasil! Mengalihkan ke dashboard...", "success");
+                setTimeout(() => { 
+                    // Gunakan path relatif agar aman di ponsel
+                    window.location.href = "./index.html"; 
+                }, 1000);
+            }
+        }
+    </script>
+</body>
+</html>
