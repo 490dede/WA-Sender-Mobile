@@ -3,138 +3,143 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WA-Sender PRO Mobile</title>
+    <title>DASHBOARD | WA-SENDER PRO</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.39.7/dist/umd/supabase.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        .line-clamp-1 { display: -webkit-box; -webkit-line-clamp: 1; -webkit-box-orient: vertical; overflow: hidden; }
+        .announcement-banner { animation: slideIn 0.5s ease-out; }
+        @keyframes slideIn { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
 </head>
-<body class="bg-slate-100 min-h-screen pb-10">
+<body class="bg-slate-50 min-h-screen pb-10">
 
-    <nav class="bg-emerald-600 text-white p-4 shadow-md sticky top-0 z-50 flex justify-between items-center">
-        <h1 class="text-lg font-bold italic">WA-SENDER PRO <span class="text-yellow-300">MOBILE</span></h1>
-        <button onclick="handleLogout()" class="text-[10px] bg-red-500/20 text-red-100 px-3 py-1 rounded-lg border border-white/20">LOGOUT</button>
+    <div id="announcementArea"></div>
+
+    <nav class="bg-white border-b border-slate-200 p-4 sticky top-0 z-50 flex justify-between items-center">
+        <div class="flex items-center gap-2">
+            <div class="w-8 h-8 bg-emerald-500 rounded-lg flex items-center justify-center shadow-lg shadow-emerald-200">
+                <span class="text-white font-black text-xs">WA</span>
+            </div>
+            <h1 class="text-sm font-bold text-slate-800 tracking-tight">DASHBOARD <span class="text-emerald-500">USER</span></h1>
+        </div>
+        <div class="flex items-center gap-3">
+            <button onclick="handleLogout()" class="text-[10px] font-bold text-slate-400 hover:text-red-500 transition-colors uppercase">Logout</button>
+        </div>
     </nav>
 
-    <div class="max-w-md mx-auto p-4 space-y-5">
+    <div class="max-w-md mx-auto p-4 space-y-4">
         
-        <div id="statusBox" class="bg-slate-900 p-5 rounded-2xl shadow-xl text-white border border-slate-700">
-            <div class="flex justify-between items-center mb-4">
-                <div>
-                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Status Akun</p>
-                    <h3 id="userStatus" class="text-lg font-bold text-emerald-400">MEMUAT...</h3>
+        <div class="bg-slate-900 rounded-3xl p-6 shadow-2xl shadow-slate-300 text-white relative overflow-hidden">
+            <div class="relative z-10">
+                <div class="flex justify-between items-start mb-6">
+                    <div>
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Paket Saat Ini</p>
+                        <h2 id="displayPackage" class="text-xl font-black text-emerald-400">Loading...</h2>
+                    </div>
+                    <div class="text-right">
+                        <p class="text-[10px] text-slate-400 font-bold uppercase tracking-widest mb-1">Masa Aktif</p>
+                        <p id="displayExpiry" class="text-xs font-bold">-</p>
+                    </div>
                 </div>
-                <div class="text-right">
-                    <p class="text-[10px] text-slate-400 font-black uppercase tracking-widest">Berakhir Pada</p>
-                    <p id="expiryDate" class="text-xs font-bold">-</p>
+
+                <div class="grid grid-cols-2 gap-2">
+                    <div id="statusImg" class="bg-white/5 border border-white/10 rounded-xl p-3 opacity-30">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Langganan Gambar</p>
+                        <p class="text-[10px] font-bold" id="txtImg">NON-AKTIF</p>
+                    </div>
+                    <div id="statusVid" class="bg-white/5 border border-white/10 rounded-xl p-3 opacity-30">
+                        <p class="text-[9px] font-bold text-slate-400 uppercase">Video & Link</p>
+                        <p class="text-[10px] font-bold" id="txtVid">NON-AKTIF</p>
+                    </div>
                 </div>
             </div>
+            <div class="absolute -bottom-10 -right-10 w-32 h-32 bg-emerald-500/10 rounded-full blur-3xl"></div>
+        </div>
 
-            <div id="promoBox" class="hidden bg-white/10 p-4 rounded-xl border border-white/10">
-                <p class="text-[10px] font-bold text-yellow-400 mb-1 italic" id="eventName">DISKON KHUSUS HARI INI!</p>
-                <div class="flex items-end gap-2 mb-3">
-                    <span id="displayPrice" class="text-2xl font-black text-white">Rp 150.000</span>
-                    <span id="originalPrice" class="text-xs text-slate-400 line-through mb-1 hidden"></span>
+        <div class="bg-white p-5 rounded-3xl shadow-sm border border-slate-100">
+            <div class="space-y-4">
+                <div>
+                    <label class="text-[10px] font-bold text-slate-400 uppercase tracking-widest ml-1">1. List Nomor WhatsApp</label>
+                    <textarea id="bulkInput" rows="3" class="w-full mt-1 p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0812...&#10;0857..."></textarea>
                 </div>
                 
-                <div class="flex gap-2 mb-3">
-                    <input type="text" id="promoInput" placeholder="Kode Diskon?" class="flex-1 bg-slate-800 border border-slate-600 rounded-lg px-3 py-2 text-xs text-white outline-none">
-                    <button onclick="cekPromo()" class="bg-yellow-500 text-slate-900 text-[10px] font-bold px-4 py-2 rounded-lg">PAKAI</button>
+                <div class="grid grid-cols-2 gap-3">
+                    <input type="text" id="catInput" class="p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm" placeholder="Kategori">
+                    <button onclick="simpanKeAntrean()" class="bg-emerald-500 text-white font-bold rounded-2xl shadow-lg shadow-emerald-100 active:scale-95 transition-all text-xs">SIMPAN</button>
                 </div>
-                <p id="promoStatus" class="text-[9px] mb-3 hidden"></p>
 
-                <button onclick="bukaWhatsAppAdmin()" class="w-full bg-emerald-500 text-white text-xs font-black py-3 rounded-lg hover:bg-emerald-400 transition-all">
-                    UPGRADE KE PRO SEKARANG
-                </button>
+                <textarea id="msgInput" rows="3" class="w-full p-4 bg-slate-50 border border-slate-100 rounded-2xl text-sm" placeholder="Tulis pesan Anda..."></textarea>
             </div>
         </div>
 
-        <div class="bg-white p-5 rounded-2xl shadow-sm border border-slate-200">
-            <label class="block text-xs font-black text-slate-500 mb-2 uppercase tracking-widest">1. Tempel Nomor WA</label>
-            <textarea id="bulkInput" rows="4" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm focus:ring-2 focus:ring-emerald-500 outline-none" placeholder="0812xxx&#10;0857xxx"></textarea>
-            
-            <div class="mt-4 space-y-3">
-                <input type="text" id="catInput" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Nama Kategori (Contoh: Promo Hijab)">
-                <textarea id="msgInput" rows="3" class="w-full p-3 bg-slate-50 border border-slate-200 rounded-xl text-sm" placeholder="Tulis pesan di sini..."></textarea>
-                <button onclick="simpanKeAntrean()" class="w-full bg-emerald-600 text-white font-bold py-4 rounded-xl shadow-lg shadow-emerald-200 active:scale-95 transition-all">
-                    SIMPAN KE ANTREAN
-                </button>
-            </div>
-        </div>
-
-        <div>
+        <div class="pt-2">
             <div class="flex justify-between items-center mb-4 px-1">
-                <h2 class="font-bold text-slate-700 uppercase text-xs tracking-tighter">Daftar Siap Kirim</h2>
-                <button onclick="loadAntrean()" class="text-emerald-600 text-xs font-bold bg-emerald-50 px-3 py-1 rounded-full">REFRESH</button>
+                <h3 class="font-bold text-slate-800 text-xs uppercase tracking-widest">Antrean Pesan</h3>
+                <span id="countBadge" class="bg-slate-200 text-slate-600 text-[10px] px-2 py-0.5 rounded-full font-bold">0</span>
             </div>
             <div id="antreanList" class="space-y-3"></div>
         </div>
     </div>
 
     <script>
-        const SB_URL = "https://fcpwrywtavqkzhmbyoky.supabase.co";
+        const SB_URL = "https://fcpwrytavqkzhmbyoky.supabase.co";
         const SB_KEY = "sb_publishable_Ukw9L4kSggBMNDsxWqWbbw_0Pr93a4h";
         const supabase = window.supabase.createClient(SB_URL, SB_KEY);
 
-        let currentEmail = "";
+        let userUID = "";
 
-        // 1. FUNGSI LOGOUT
         async function handleLogout() {
             await supabase.auth.signOut();
             window.location.href = "login.html";
         }
 
-        // 2. FUNGSI CEK STATUS & HARGA
-        async function fetchPlatformSettings() {
+        // FUNGSI LOAD DATA USER (SESUAI DIAGRAM)
+        async function loadUserData() {
             const { data: { user } } = await supabase.auth.getUser();
-            if(!user) return;
-            currentEmail = user.email;
+            if(!user) return window.location.href = "login.html";
+            userUID = user.id;
 
-            // Ambil Status Profile
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
-            // Ambil Setting Harga
-            const { data: settings } = await supabase.from('platform_settings').select('*').single();
-
-            if (profile) {
-                document.getElementById('userStatus').innerText = profile.status.toUpperCase();
-                document.getElementById('expiryDate').innerText = profile.expired_at ? new Date(profile.expired_at).toLocaleDateString('id-ID') : 'Selamanya';
-                if (profile.status === 'free') document.getElementById('promoBox').classList.remove('hidden');
+            
+            if(profile) {
+                document.getElementById('displayPackage').innerText = profile.package_type.toUpperCase();
+                document.getElementById('displayExpiry').innerText = profile.expired_at ? new Date(profile.expired_at).toLocaleDateString('id-ID') : 'PERMANEN';
+                
+                // Update UI Add-ons
+                if(profile.add_on_image) {
+                    document.getElementById('statusImg').classList.replace('opacity-30', 'bg-emerald-500/20');
+                    document.getElementById('txtImg').innerText = "AKTIF";
+                    document.getElementById('txtImg').classList.add('text-emerald-400');
+                }
+                if(profile.add_on_video_link) {
+                    document.getElementById('statusVid').classList.replace('opacity-30', 'bg-blue-500/20');
+                    document.getElementById('txtVid').innerText = "AKTIF";
+                    document.getElementById('txtVid').classList.add('text-blue-400');
+                }
             }
+            fetchAnnouncements();
+        }
 
-            if (settings) {
-                document.getElementById('displayPrice').innerText = `Rp ${settings.price_pro_monthly.toLocaleString('id-ID')}`;
-                document.getElementById('eventName').innerText = settings.event_name || "DISKON KHUSUS!";
+        // FITUR PENGUMUMAN ADMIN (BARU)
+        async function fetchAnnouncements() {
+            const { data } = await supabase.from('announcements')
+                .select('*')
+                .eq('is_active', true)
+                .or(`target_user.eq.${userUID},target_user.is.null`)
+                .order('created_at', { ascending: false })
+                .limit(1);
+
+            if(data && data.length > 0) {
+                const info = data[0];
+                document.getElementById('announcementArea').innerHTML = `
+                    <div class="announcement-banner bg-yellow-400 p-3 text-center shadow-sm">
+                        <p class="text-[10px] font-black text-slate-900 uppercase tracking-tighter">📢 ${info.title}: ${info.content}</p>
+                    </div>
+                `;
             }
         }
 
-        // 3. FUNGSI CEK KODE DISKON
-        async function cekPromo() {
-            const kode = document.getElementById('promoInput').value.toUpperCase();
-            const statusMsg = document.getElementById('promoStatus');
-            if(!kode) return;
-
-            const { data: promo } = await supabase.from('promo_codes').select('*').eq('code', kode).eq('is_active', true).single();
-
-            statusMsg.classList.remove('hidden');
-            if (promo) {
-                const hargaDasar = 150000; 
-                const potongan = (promo.discount_percent / 100) * hargaDasar;
-                const hargaFinal = hargaDasar - potongan;
-                document.getElementById('displayPrice').innerText = `Rp ${hargaFinal.toLocaleString('id-ID')}`;
-                statusMsg.innerText = `Berhasil! Diskon ${promo.discount_percent}% diterapkan.`;
-                statusMsg.className = "text-[9px] mb-3 font-bold text-emerald-400";
-            } else {
-                statusMsg.innerText = "Kode tidak valid.";
-                statusMsg.className = "text-[9px] mb-3 font-bold text-red-400";
-            }
-        }
-
-        // 4. HUBUNGI ADMIN UNTUK BAYAR
-        function bukaWhatsAppAdmin() {
-            const adminWA = "6285161990373"; // <--- GANTI NOMOR WA KAMU DI SINI
-            const msg = encodeURIComponent(`Halo Admin, saya ingin upgrade PRO. Akun: ${currentEmail}. Harga tertera: ${document.getElementById('displayPrice').innerText}`);
-            window.open(`https://api.whatsapp.com/send?phone=${adminWA}&text=${msg}`, '_blank');
-        }
-
-        // 5. SIMPAN ANTREAN
         async function simpanKeAntrean() {
             const bulkText = document.getElementById('bulkInput').value.trim();
             const category = document.getElementById('catInput').value || 'Umum';
@@ -148,66 +153,63 @@
                 .map(num => ({
                     phone: num.startsWith('0') ? '62' + num.slice(1) : num,
                     message_content: message,
-                    category_name: category
+                    category_name: category,
+                    user_id: userUID
                 }));
 
             const { error } = await supabase.from('messages_queue').insert(cleanData);
-            if (error) return alert("Gagal: " + error.message);
-            
-            alert(cleanData.length + " Nomor masuk antrean!");
-            document.getElementById('bulkInput').value = "";
-            loadAntrean();
+            if (!error) {
+                document.getElementById('bulkInput').value = "";
+                loadAntrean();
+            }
         }
 
-        // 6. LOAD ANTREAN
         async function loadAntrean() {
             const listDiv = document.getElementById('antreanList');
-            listDiv.innerHTML = '<div class="text-center p-10 text-slate-400 text-sm italic">Memuat data...</div>';
-
-            const { data, error } = await supabase.from('messages_queue').select('*').order('created_at', { ascending: false });
-
-            if (error) return listDiv.innerHTML = `<div class="text-red-500 text-xs p-4 bg-red-50 rounded-xl">${error.message}</div>`;
+            const { data } = await supabase.from('messages_queue').select('*').order('created_at', { ascending: false });
+            
+            document.getElementById('countBadge').innerText = data ? data.length : 0;
+            listDiv.innerHTML = "";
 
             if (data && data.length > 0) {
-                listDiv.innerHTML = "";
                 data.forEach(item => {
                     const div = document.createElement('div');
                     div.id = `box-${item.id}`;
-                    div.className = "bg-white p-4 rounded-2xl shadow-sm border border-slate-100 flex justify-between items-center";
+                    div.className = "bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center announcement-banner";
                     div.innerHTML = `
-                        <div class="flex-1 pr-3">
-                            <span class="text-[9px] bg-slate-100 px-2 py-0.5 rounded font-bold text-slate-500 uppercase">${item.category_name}</span>
-                            <div class="font-bold text-slate-800 text-sm mt-1">${item.phone}</div>
-                            <div class="text-[11px] text-slate-500 line-clamp-1">${item.message_content}</div>
+                        <div class="flex-1 pr-4">
+                            <span class="text-[8px] font-bold text-slate-400 uppercase px-2 py-0.5 bg-slate-50 rounded-md">${item.category_name}</span>
+                            <div class="text-xs font-bold text-slate-800 mt-1">${item.phone}</div>
+                            <div class="text-[10px] text-slate-500 line-clamp-1">${item.message_content}</div>
                         </div>
-                        <button onclick="eksekusiKirim('${item.phone}', '${encodeURIComponent(item.message_content)}', '${item.id}')" 
-                                class="bg-emerald-500 text-white px-4 py-2 rounded-xl text-xs font-black shadow-md shadow-emerald-100">
-                            KIRIM
-                        </button>
+                        <div class="flex gap-2">
+                            <button onclick="hapusAntrean('${item.id}')" class="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+                            </button>
+                            <button onclick="eksekusiKirim('${item.phone}', '${encodeURIComponent(item.message_content)}', '${item.id}')" class="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold shadow-md shadow-emerald-50">KIRIM</button>
+                        </div>
                     `;
                     listDiv.appendChild(div);
                 });
             } else {
-                listDiv.innerHTML = '<div class="text-center p-10 text-slate-400 text-sm italic">Antrean kosong.</div>';
+                listDiv.innerHTML = '<div class="text-center py-10 text-slate-300 text-xs italic">Antrean kosong</div>';
             }
+        }
+
+        async function hapusAntrean(id) {
+            const { error } = await supabase.from('messages_queue').delete().eq('id', id);
+            if(!error) document.getElementById(`box-${id}`).remove();
         }
 
         async function eksekusiKirim(phone, msg, id) {
             window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${msg}`, '_blank');
             await supabase.from('messages_queue').delete().eq('id', id);
             document.getElementById(`box-${id}`).remove();
-            if (document.getElementById('antreanList').children.length === 0) loadAntrean();
         }
 
-        // 7. JALANKAN SAAT START
-        window.onload = async () => {
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!session) {
-                window.location.href = "login.html";
-            } else {
-                fetchPlatformSettings(); 
-                loadAntrean();
-            }
+        window.onload = () => {
+            loadUserData();
+            loadAntrean();
         };
     </script>
 </body>
