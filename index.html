@@ -147,15 +147,15 @@
 
             if (!bulkText || !message) return alert("Nomor dan Pesan harus diisi!");
 
-            const cleanData = bulkText.split('\n')
-                .map(n => n.replace(/\D/g, ''))
-                .filter(n => n.length >= 10)
-                .map(num => ({
-                    phone: num.startsWith('0') ? '62' + num.slice(1) : num,
-                    message_content: message,
-                    category_name: category,
-                    user_id: userUID
-                }));
+           const cleanData = bulkText.split('\n')
+    .map(n => n.replace(/\D/g, ''))
+    .filter(n => n.length >= 10)
+    .map(num => ({
+        phone: num.startsWith('0') ? '62' + num.slice(1) : num,
+        message_content: message,
+        category_name: category,
+        user_id: userUID // <-- Ini Kuncinya! Mengunci pesan ke ID user tersebut
+    }));
 
             const { error } = await supabase.from('messages_queue').insert(cleanData);
             if (!error) {
@@ -214,3 +214,4 @@
     </script>
 </body>
 </html>
+
