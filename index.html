@@ -94,19 +94,20 @@
             window.location.href = "login.html";
         }
 
-        // FUNGSI LOAD DATA USER (SESUAI DIAGRAM)
         async function loadUserData() {
             const { data: { user } } = await supabase.auth.getUser();
-            if(!user) return window.location.href = "login.html";
+            if(!user) {
+                window.location.href = "login.html";
+                return;
+            }
             userUID = user.id;
 
             const { data: profile } = await supabase.from('profiles').select('*').eq('id', user.id).single();
             
             if(profile) {
-                document.getElementById('displayPackage').innerText = profile.package_type.toUpperCase();
+                document.getElementById('displayPackage').innerText = (profile.package_type || 'FREE').toUpperCase();
                 document.getElementById('displayExpiry').innerText = profile.expired_at ? new Date(profile.expired_at).toLocaleDateString('id-ID') : 'PERMANEN';
                 
-                // Update UI Add-ons
                 if(profile.add_on_image) {
                     document.getElementById('statusImg').classList.replace('opacity-30', 'bg-emerald-500/20');
                     document.getElementById('txtImg').innerText = "AKTIF";
@@ -121,7 +122,6 @@
             fetchAnnouncements();
         }
 
-        // FITUR PENGUMUMAN ADMIN (BARU)
         async function fetchAnnouncements() {
             const { data } = await supabase.from('announcements')
                 .select('*')
@@ -148,77 +148,62 @@
             if (!bulkText || !message) return alert("Nomor dan Pesan harus diisi!");
 
             const cleanData = bulkText.split('\n')
-    .map(n => n.replace(/\D/g, ''))
-    .filter(n => n.length >= 10)
-    .map(num => ({
-        phone: num.startsWith('0') ? '62' + num.slice(1) : num,
-        message_content: message,
-        category_name: category,
-        user_id: userUID // <-- Ini Kuncinya! Mengunci pesan ke ID user tersebut
-    }));
+                .map(n => n.replace(/\D/g, ''))
+                .filter(n => n.length >= 10)
+                .map(num => ({
+                    phone: num.startsWith('0') ? '62' + num.slice(1) : num,
+                    message_content: message,
+                    category_name: category,
+                    user_id: userUID 
+                }));
 
             const { error } = await supabase.from('messages_queue').insert(cleanData);
             if (!error) {
                 document.getElementById('bulkInput').value = "";
                 loadAntrean();
+            } else {
+                alert("Error simpan: " + error.message);
             }
         }
 
-        // 6. LOAD ANTREAN (VERSI ANTI-KEDIP & MULTI-USER)
-async function loadAntrean() {
-    const listDiv = document.getElementById('antreanList');
-    
-    // Ambil data hanya milik user yang sedang login (.eq('user_id', userUID))
-    const { data, error } = await supabase
-        .from('messages_queue')
-        .select('*')
-        .eq('user_id', userUID) 
-        .order('created_at', { ascending: false });
+        async function loadAntrean() {
+            const listDiv = document.getElementById('antreanList');
+            const { data, error } = await supabase
+                .from('messages_queue')
+                .select('*')
+                .eq('user_id', userUID) 
+                .order('created_at', { ascending: false });
 
-    // Update angka badge antrean
-    document.getElementById('countBadge').innerText = data ? data.length : 0;
-    
-    // Kosongkan list sebelum diisi data baru (mencegah duplikat)
-    listDiv.innerHTML = "";
+            document.getElementById('countBadge').innerText = data ? data.length : 0;
+            listDiv.innerHTML = "";
 
-    if (error) {
-        listDiv.innerHTML = `<div class="text-red-500 text-[10px] p-4 text-center italic">Gagal memuat: ${error.message}</div>`;
-        return;
-    }
+            if (error) {
+                listDiv.innerHTML = `<div class="text-red-500 text-[10px] p-4 text-center italic">Gagal memuat antrean</div>`;
+                return;
+            }
 
-    if (data && data.length > 0) {
-        data.forEach(item => {
-            const div = document.createElement('div');
-            div.id = `box-${item.id}`;
-            div.className = "bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center announcement-banner";
-            div.innerHTML = `
-                <div class="flex-1 pr-4">
-                    <span class="text-[8px] font-bold text-slate-400 uppercase px-2 py-0.5 bg-slate-50 rounded-md">${item.category_name}</span>
-                    <div class="text-xs font-bold text-slate-800 mt-1">${item.phone}</div>
-                    <div class="text-[10px] text-slate-500 line-clamp-1">${item.message_content}</div>
-                </div>
-                <div class="flex gap-2">
-                    <button onclick="hapusAntrean('${item.id}')" class="p-2 text-slate-300 hover:text-red-500 transition-colors">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16">
-                            <path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/>
-                            <path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/>
-                        </svg>
-                    </button>
-                    <button onclick="eksekusiKirim('${item.phone}', '${encodeURIComponent(item.message_content)}', '${item.id}')" 
-                        class="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold shadow-md shadow-emerald-50 active:scale-90 transition-all">
-                        KIRIM
-                    </button>
-                </div>
-            `;
-            listDiv.appendChild(div);
-        });
-    } else {
-        listDiv.innerHTML = '<div class="text-center py-10 text-slate-300 text-[10px] italic uppercase tracking-widest">Antrean Kosong</div>';
-    }
-}
-
+            if (data && data.length > 0) {
+                data.forEach(item => {
+                    const div = document.createElement('div');
+                    div.id = `box-${item.id}`;
+                    div.className = "bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center announcement-banner";
+                    div.innerHTML = `
+                        <div class="flex-1 pr-4">
+                            <span class="text-[8px] font-bold text-slate-400 uppercase px-2 py-0.5 bg-slate-50 rounded-md">${item.category_name}</span>
+                            <div class="text-xs font-bold text-slate-800 mt-1">${item.phone}</div>
+                            <div class="text-[10px] text-slate-500 line-clamp-1">${item.message_content}</div>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="hapusAntrean('${item.id}')" class="p-2 text-slate-300 hover:text-red-500 transition-colors">
+                                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16"><path d="M5.5 5.5A.5.5 0 0 1 6 6v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm2.5 0a.5.5 0 0 1 .5.5v6a.5.5 0 0 1-1 0V6a.5.5 0 0 1 .5-.5zm3 .5a.5.5 0 0 0-1 0v6a.5.5 0 0 0 1 0V6z"/><path fill-rule="evenodd" d="M14.5 3a1 1 0 0 1-1 1H13v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V4h-.5a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1H6a1 1 0 0 1 1-1h2a1 1 0 0 1 1 1h3.5a1 1 0 0 1 1 1v1zM4.118 4 4 4.059V13a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1V4.059L11.882 4H4.118zM2.5 3V2h11v1h-11z"/></svg>
+                            </button>
+                            <button onclick="eksekusiKirim('${item.phone}', '${encodeURIComponent(item.message_content)}', '${item.id}')" class="bg-emerald-500 text-white px-4 py-2 rounded-xl text-[10px] font-bold shadow-md shadow-emerald-50">KIRIM</button>
+                        </div>
+                    `;
+                    listDiv.appendChild(div);
+                });
             } else {
-                listDiv.innerHTML = '<div class="text-center py-10 text-slate-300 text-xs italic">Antrean kosong</div>';
+                listDiv.innerHTML = '<div class="text-center py-10 text-slate-300 text-[10px] italic uppercase tracking-widest">Antrean Kosong</div>';
             }
         }
 
@@ -230,12 +215,18 @@ async function loadAntrean() {
         async function eksekusiKirim(phone, msg, id) {
             window.open(`https://api.whatsapp.com/send?phone=${phone}&text=${msg}`, '_blank');
             await supabase.from('messages_queue').delete().eq('id', id);
-            document.getElementById(`box-${id}`).remove();
+            const el = document.getElementById(`box-${id}`);
+            if(el) el.remove();
         }
 
-        window.onload = () => {
-            loadUserData();
-            loadAntrean();
+        window.onload = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!session) {
+                window.location.href = "login.html";
+            } else {
+                await loadUserData();
+                await loadAntrean();
+            }
         };
     </script>
 </body>
